@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1514947078772.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "327057867",
+    "id" : "B4C8ADD4",
+    "lastKnownWriteTime" : 1514950354,
+    "last_content_update" : 1514950354226,
+    "path" : "P:/Training/00_R/Training/2.1_Textbook.R",
+    "project_path" : "2.1_Textbook.R",
+    "properties" : {
+        "cursorPosition" : "4,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}
