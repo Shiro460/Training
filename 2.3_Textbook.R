@@ -97,3 +97,4 @@ CrossTable(x = usedcars$model, y = usedcars$consevative)
 
 # カイ二乗検定も実行
 CrossTable(x = usedcars$model, y = usedcars$consevative, chisq = TRUE)
+# test
