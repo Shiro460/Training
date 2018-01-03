@@ -1,0 +1,42 @@
+# ここまでに作成したデータセットのクリア
+rm(list=ls())
+
+# ウィスコンシン州乳がん診断データセットの読み込み
+wbcd <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)
+
+# 読み込んだデータセットの内容の確認
+str(wbcd)
+
+# IDは不要な情報であるため、IDを除いたデータセットを作成
+wbcd <- wbcd[-1]
+
+# データセットからIDが削除されていることを確認
+str(wbcd)
+
+# 診断結果(diagnosis)を因子に変換し、ラベルもわかりやすいものに変換
+wbcd$diagnosis <- factor(wbcd$diagnosis,
+                         levels = c("B", "M"),
+                         labels = c("Benign", "Malignant"))
+
+# 診断結果が想定通りのものになっているか確認
+round(prop.table(table(wbcd$diagnosis)) * 100, digits = 1)
+
+# 数値データの正規化
+# 正規化するためのnormalize()関数を定義
+normalize <- function(x) {
+  return ((x-min(x)) / (max(x) - min(x)))
+}
+
+# normalize()関数が動作しているかを確認
+# 以下の2つの実行結果が同じになれば問題ない
+normalize(c(1,2,3,4,5))
+normalize(c(10,20,30,40,50))
+
+# normalize()関数を個々の要素に適用
+# lapplyの構文：lapply(適用する範囲, 適用する関数)
+# as.data.frame：lapplyで返却してきたリストをデータフレームに変換する
+# is.data.frame：引数で指定されたものがデータフレームかどうかを確認する
+wbcd_n <- as.data.frame(lapply(wbcd[2:31], normalize))
+is.data.frame(wbcd_n)
+summary(wbcd_n)
+
