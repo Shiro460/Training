@@ -59,6 +59,74 @@ sms_corpus_clean <- tm_map(sms_corpus_clean, stemDocument)
 # 余分なスペースの削除
 sms_corpus_clean <- tm_map(sms_corpus_clean, stripWhitespace)
 
-# 結果の確認
-as.character(sms_corpus[1:3])
-as.character(sms_corpus_clean[1:3])
+# DTM(Document-Term Matorix：文書索引語行列)の作成
+sms_dtm <- DocumentTermMatrix(sms_corpus_clean)
+# 前処理を行っていない場合の対応方法は以下の通り
+sms_dtm2 <- DocumentTermMatrix(sms_corpus, control = list(
+  tolower = TRUE,
+  removeNumbers = TRUE,
+  stopwords = TRUE,
+  removePunctuation = TRUE,
+  stemming = TRUE
+))
+
+# 訓練データとテストデータ、またそれぞれのラベルの作成
+sms_dtm_train <- sms_dtm[1:4174,]
+sms_dtm_test <- sms_dtm[4175:5574,]
+sms_train_labels <- sms_raw[1:4174,]$type
+sms_test_labels <- sms_raw[4175:5574,]$type
+
+# 訓練データのラベルとテストデータのラベルの違いを確認
+# ※それほど違いが大きくなければ問題ない
+prop.table(table(sms_train_labels))
+prop.table(table(sms_test_labels))
+
+# wordcloudを実行するためのパッケージを準備
+install.packages("wordcloud")
+library(wordcloud)
+
+# 全体のワードクラウド
+wordcloud(sms_corpus_clean, min.freq = 50, random.order = FALSE)
+wordcloud(sms_corpus_clean, min.freq = 50)
+wordcloud(sms_corpus_clean, min.freq = 100, random.order = FALSE)
+
+# spamとhamのメッセージのサブセットを作成
+spam <- subset(sms_raw, type == "spam")
+ham <- subset(sms_raw, type == "ham")
+
+# spamとhamのワードクラウドの作成
+wordcloud(spam$text, max.words = 40, random.order = FALSE)
+wordcloud(ham$text, max.words = 40, random.order = FALSE)
+
+# 単純ベイズ法で使用する頻出語を確認
+# 出現回数が少ない単語を削除
+findFreqTerms(sms_dtm_train, 5)
+sms_freq_words <- findFreqTerms(sms_dtm_train, 5)
+sms_dtm_freq_train <- sms_dtm_train[ , sms_freq_words]
+sms_dtm_freq_test <- sms_dtm_test[ , sms_freq_words]
+
+# 各文に頻出単語が含まれるかどうかをカテゴリで示す
+convert_counts <- function(x) {
+  x <- ifelse(x > 0, "Yes", "No")
+}
+
+sms_train <- apply(sms_dtm_freq_train, MARGIN = 2, convert_counts)
+sms_test <- apply(sms_dtm_freq_test, MARGIN = 2, convert_counts)
+
+# 単純ベイズ実装が含まれるパッケージのインストールとロード
+install.packages("e1071")
+library(e1071)
+
+# 単純ベイズのモデル構築
+sms_classifier <- naiveBayes(sms_train, sms_train_labels)
+
+# 単純ベイズモデルの性能評価
+sms_test_pred <- predict(sms_classifier, sms_test)
+install.packages("gmodels")
+library(gmodels)
+CrossTable(sms_test_pred, sms_test_labels, prop.chisq = FALSE, prop.t = FALSE, dnn = c('predicted', 'actual'))
+
+# 単純ベイズモデルにラプラス推定量を追加した場合
+sms_classifier2 <- naiveBayes(sms_train, sms_train_labels, laplace = 1)
+sms_test_pred2 <- predict(sms_classifier2, sms_test)
+CrossTable(sms_test_pred2, sms_test_labels, prop.chisq = FALSE, prop.t = FALSE, dnn = c('predicted', 'actual'))
