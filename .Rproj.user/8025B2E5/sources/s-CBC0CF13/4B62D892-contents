@@ -35,5 +35,55 @@ sms_corpus_clean <- tm_map(sms_corpus, content_transformer(tolower))
 as.character(sms_corpus[[1]])
 as.character(sms_corpus_clean[[1]])
 
-# SMSメッセージから数字を取り除く
+# SMSメッセージから数字やstopwordsを取り除く
 sms_corpus_clean <- tm_map(sms_corpus_clean, removeNumbers)
+sms_corpus_clean <- tm_map(sms_corpus_clean, removeWords, stopwords())
+
+# 記号類を削除(テキストのやり方)
+sms_corpus_clean <- tm_map(sms_corpus_clean, removePunctuation)
+
+# 記号を空白に置換(テキストのコラムのやり方)
+# 置換をするメソッドの作成
+replacePunctuation <- function(x) {
+  gsub("[[:punct:]]+", " ", x)
+}
+# 置換処理
+# sms_corpus_clean <- tm_map(sms_corpus_clean, replacePunctuation)
+
+# stemming処理
+# SnowballCパッケージのインストール(初回のみ)とロード
+# install.packages("SnowballC")
+library(SnowballC)
+sms_corpus_clean <- tm_map(sms_corpus_clean, stemDocument)
+
+# 余分なスペースの削除
+sms_corpus_clean <- tm_map(sms_corpus_clean, stripWhitespace)
+
+# DTM(Document-Term Matorix：文書索引語行列)の作成
+sms_dtm <- DocumentTermMatrix(sms_corpus_clean)
+# 前処理を行っていない場合の対応方法は以下の通り
+sms_dtm2 <- DocumentTermMatrix(sms_corpus, control = list(
+  tolower = TRUE,
+  removeNumbers = TRUE,
+  stopwords = TRUE,
+  removePunctuation = TRUE,
+  stemming = TRUE
+))
+
+# 訓練データとテストデータ、またそれぞれのラベルの作成
+sms_dtm_train <- sms_dtm[1:4174,]
+sms_dtm_test <- sms_dtm[4175:5574,]
+sms_train_labels <- sms_raw[1:4174,]$type
+sms_test_labels <- sms_raw[4175:5574,]$type
+
+# 訓練データのラベルとテストデータのラベルの違いを確認
+# ※それほど違いが大きくなければ問題ない
+prop.table(table(sms_train_labels))
+prop.table(table(sms_test_labels))
+
+# wordcloudを実行するためのパッケージを準備
+install.packages("wordcloud")
+library(wordcloud)
+
+# 全体のワードクラウド
+wordcloud(sms_corpus_clean, mn.freq = 50, random.order = FALSE)
